@@ -1,0 +1,127 @@
+<html>
+<head>
+ <script src = "https://ajax.googleapis.com/ajax/libs/angularjs/1.3.3/angular.min.js"></script> 
+ <script src="https://rawgit.com/CrackerakiUA/ngImgCropFullExtended/master/compile/unminified/ng-img-crop.js"></script> 
+  <link rel="stylesheet" type="text/css" href="https://cdn.rawgit.com/CrackerakiUA/ngImgCropExtended/master/compile/unminified/ng-img-crop.css">
+  <style>
+    .cropArea {
+  background: #E4E4E4;
+  overflow: hidden;
+  width:500px;
+  height:300px;
+}
+
+  </style> 
+  <script>
+    angular.module('app', ['ngImgCrop'])
+  .controller('Ctrl', function($scope,$http) {
+   ;
+    $scope.myCroppedImage='';
+    $scope.myImage= '';
+    $scope.imageUrl = 'null';
+
+     $scope.uploadImage = function() {
+      if($scope.myImage == '') 
+          return;
+         var fileBlob = $scope.myCroppedImage.split("base64");
+         var  file= {
+            data: fileBlob[1]
+          };
+       $http.post('http://localhost:8080/uploadFile/',file)
+              .success(function(response){
+              console.log(response);
+              $scope.imageUrl = response.url;
+
+
+              });
+
+     }
+    $scope.blockingObject = {block:true};
+    $scope.callTestFuntion = function(){
+      $scope.blockingObject.render(function(dataURL){
+        console.log('via render');
+        console.log(dataURL.length);
+      });
+    }
+    $scope.blockingObject.callback=function(dataURL){
+      console.log('via function');
+      console.log(dataURL.length);
+    }
+    
+    $scope.isRotating = false;
+    $scope.rotate = function(isClockwise) {
+      if (!$scope.myImage) return;
+      $scope.isRotating = true;
+      rotateBase64Image($scope.myImage, isClockwise, function(result) {
+        $scope.$apply(function() {  
+          $scope.myImage = result;
+          $scope.isRotating = false;
+        });                
+      });
+    }
+
+
+    
+    
+    function rotateBase64Image(base64data, isClockwise, callback) {
+      var image = new Image();
+      image.onload = function() {
+        var canvas = document.createElement('canvas');
+        canvas.width = image.height;
+        canvas.height = image.width;
+        var ctx = canvas.getContext("2d");
+        var deg = isClockwise ? Math.PI / 2 : Math.PI / -2;
+        // translate to center-canvas 
+        // the origin [0,0] is now center-canvas
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        // roate the canvas by +90% (==Math.PI/2)
+        ctx.rotate(deg);
+        // draw the signature
+        // since images draw from top-left offset the draw by 1/2 width & height
+        ctx.drawImage(image, -image.width / 2, -image.height / 2);
+        // un-rotate the canvas by -90% (== -Math.PI/2)
+        ctx.rotate(-deg);
+        // un-translate the canvas back to origin==top-left canvas
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        callback(canvas.toDataURL());
+      };
+      //image.crossOrigin = "Anonymous";
+      image.src = base64data;
+    }
+
+  
+    var handleFileSelect=function(evt) {
+      var file=evt.currentTarget.files[0];
+      var reader = new FileReader();
+      reader.onload = function (evt) {
+        $scope.$apply(function($scope){
+          $scope.myImage=evt.target.result;
+        });
+      };
+      reader.readAsDataURL(file);
+    };
+      angular.element(document.querySelector('#fileInput')).on('change',handleFileSelect);
+  
+  });
+
+  </script> 
+</head>
+<table ng-app="app" ng-controller="Ctrl">
+  <td>
+    <div>Select an image file: <input type="file" id="fileInput" /></div>
+    <button ng-click="callTestFuntion()">Render</button>
+    <button ng-click="rotate(false)">Rotate Left</button>
+    <button ng-click="rotate(true)">Rotate Right</button>
+     <button ng-click="uploadImage()">Upload Image</button>
+    <span ng-show="isRotating">Rotating...</span>
+    <div class="cropArea">
+      <img-crop image="myImage" area-type="rectangle" result-image="myCroppedImage" result-image-quality="0.5" live-view="blockingObject"></img-crop>
+    </div>
+  </td>
+  <td>
+    <div >Cropped Image:</div>
+    <div ><img ng-src="{{myCroppedImage}}" /></div>
+    <div>Your url:{{imageUrl}}</div>
+  </td>
+</table>
+</html>

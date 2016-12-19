@@ -1,0 +1,17 @@
+{
+  "name": "imageeditor",
+  "version": "4.4.7",
+  "description": "editsiamges",
+  "main": "y",
+  "scripts": {
+    "test": "run"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "mongodb": "^2.2.16",
+    "path": "^0.12.7"
+  }
+}
